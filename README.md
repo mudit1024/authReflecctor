@@ -45,6 +45,46 @@ Apps are registered at runtime in the database: no config file, no restart.
    (OAuth 2.1 does not allow `localhost` here: open local apps at `http://127.0.0.1:<port>`).
 4. Disabling an app blocks new sign-ins at once and ends its existing sessions.
 
+## Adding SSO to a Spring Boot app (client starter)
+
+1. Register the app on the admin page as **With backend**; redirect URL `http://127.0.0.1:<port>/login/oauth2/code/authreflector`,
+   after-sign-out URL `http://127.0.0.1:<port>/`. Copy the secret (shown once).
+2. Add the starter (built by [JitPack](https://jitpack.io) from a Git tag of this repo):
+
+```xml
+<repositories>
+  <repository><id>jitpack.io</id><url>https://jitpack.io</url></repository>
+</repositories>
+<dependency>
+  <groupId>com.github.mudit1024.authReflector</groupId>
+  <artifactId>authreflector-client-spring-boot-starter</artifactId>
+  <version>0.1.0</version>
+</dependency>
+```
+
+3. Four lines of config:
+
+```yaml
+authreflector:
+  client:
+    issuer-uri: http://localhost:9000
+    client-id: splitmate-web
+    client-secret: ${SPLITMATE_CLIENT_SECRET}
+    audience: splitmate-api
+```
+
+That's all: no login code in the app. You get:
+- browser sign-in through AuthReflector (BFF: tokens stay on the server)
+- `401` JSON for `/api/**` and a redirect to sign-in for pages
+- bearer tokens for mobile apps and API clients, with the audience check
+- `AuthReflectorUser user` as a controller parameter
+- `ROLE_*` authorities from the roles
+- `GET /auth/login`, `GET /auth/me`, `GET /auth/csrf` (send its token as `X-CSRF-TOKEN` on POST/PUT/DELETE)
+- `POST /auth/logout`, which returns `{logoutUrl}`; open it in the browser to sign out at AuthReflector too
+- `AuthReflectorSignInEvent` on every sign-in, to create or update the app's own user row
+
+Source: [client/](client).
+
 ## Adding SSO to a frontend-only app (JS SDK)
 
 1. Register the app on the admin page as **Frontend only**, with its page URL as redirect URL
