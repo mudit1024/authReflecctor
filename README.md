@@ -45,6 +45,27 @@ Apps are registered at runtime in the database: no config file, no restart.
    (OAuth 2.1 does not allow `localhost` here: open local apps at `http://127.0.0.1:<port>`).
 4. Disabling an app blocks new sign-ins at once and ends its existing sessions.
 
+## Adding SSO to a frontend-only app (JS SDK)
+
+1. Register the app on the admin page as **Frontend only**, with its page URL as redirect URL
+   (e.g. `http://127.0.0.1:5175/`) and the same URL as after-sign-out URL.
+2. Add the SDK (served by AuthReflector itself) and initialise it:
+
+```html
+<script src="http://localhost:9000/sdk/authreflector-web.js"></script>
+<script>
+  const auth = AuthReflector.create({ issuer: 'http://localhost:9000', clientId: 'pincode' })
+  auth.init().then((user) => {
+    // user = { id, name, email, roles } or null
+    // signed in at AuthReflector already? then you're signed in here too (silent single sign-on)
+  })
+  // auth.signIn(), auth.signOut(), auth.getAccessToken(), auth.onChange(listener)
+</script>
+```
+
+Open the app at `http://127.0.0.1:<port>` (not `localhost`), matching its registered redirect URL.
+The SDK source is in [sdk/web](sdk/web); it is built into the jar by `./mvnw -Pui package`.
+
 ## Tech stack
 
 | Layer | Choice |

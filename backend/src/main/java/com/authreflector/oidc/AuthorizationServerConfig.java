@@ -25,8 +25,10 @@ import org.springframework.security.web.authentication.LoginUrlAuthenticationEnt
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.authreflector.apps.EnabledAppsClientRepository;
+import com.authreflector.apps.SpaOriginsCorsConfigurationSource;
 import com.authreflector.launcher.UsageRecordingAuthorizationService;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
@@ -63,6 +65,8 @@ public class AuthorizationServerConfig {
         http
                 .securityMatcher(authorizationServer.getEndpointsMatcher())
                 .with(authorizationServer, server -> server.oidc(Customizer.withDefaults()))
+                // Frontend-only apps call the token endpoint from the browser (uses the corsConfigurationSource bean)
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
                 // Same session storage and saved-request handling as our login page (SecurityConfig)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
@@ -99,6 +103,12 @@ public class AuthorizationServerConfig {
     public OAuth2AuthorizationConsentService authorizationConsentService(
             JdbcOperations jdbc, RegisteredClientRepository clients) {
         return new JdbcOAuth2AuthorizationConsentService(jdbc, clients);
+    }
+
+    // CORS only for registered frontend-only apps, read from the database (see SpaOriginsCorsConfigurationSource)
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource(JdbcTemplate jdbc) {
+        return new SpaOriginsCorsConfigurationSource(jdbc);
     }
 
     // A fixed issuer: tokens must say the same "iss" no matter which host name a request came in on
