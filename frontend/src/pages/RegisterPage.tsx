@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { AlertCircle, Mail, User } from 'lucide-react'
 import { AuthLayout } from '@/components/AuthLayout'
 import { PasswordChecklist } from '@/components/PasswordChecklist'
@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { register } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { meetsPasswordPolicy } from '@/lib/passwordPolicy'
+import { goTo } from '@/lib/navigation'
 
 type Form = { name: string; email: string; password: string }
 type Field = keyof Form
@@ -19,7 +20,6 @@ type Field = keyof Form
 const LOOKS_LIKE_EMAIL = /^[^\s@]+@[^\s@]+$/
 
 export function RegisterPage() {
-  const navigate = useNavigate()
   const [form, setForm] = useState<Form>({ name: '', email: '', password: '' })
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Field, string>>>({})
   const [error, setError] = useState<{ message: string; emailTaken?: boolean } | null>(null)
@@ -43,8 +43,10 @@ export function RegisterPage() {
     setError(null)
     setFieldErrors({})
     try {
-      const account = await register(form)
-      navigate('/login', { state: { registeredEmail: account.email } })
+      // The new account is already signed in: continue to the app that sent the user, or the account page
+      const { redirectUrl } = await register(form)
+      goTo(redirectUrl)
+      return
     } catch (caught) {
       const apiError = caught instanceof ApiError ? caught : new ApiError(0, 'Something went wrong. Please try again.')
       if (apiError.fieldErrors.length > 0) {
@@ -60,7 +62,7 @@ export function RegisterPage() {
       } else {
         setError({ message: apiError.message })
       }
-    } finally {
+      // Only on failure: on success the button stays busy while the browser navigates away
       setSubmitting(false)
     }
   }
@@ -84,7 +86,7 @@ export function RegisterPage() {
           <AlertTitle>
             {error.message}{' '}
             {error.emailTaken && (
-              <Link to="/login" state={{ registeredEmail: form.email.trim().toLowerCase() }} className="underline">
+              <Link to="/login" state={{ email: form.email.trim().toLowerCase() }} className="underline">
                 Sign in instead
               </Link>
             )}
