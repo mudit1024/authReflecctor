@@ -150,6 +150,7 @@
 			<id>ui</id>
 			<properties>
 				<frontend.dir>${project.basedir}/../frontend</frontend.dir>
+				<sdk.dir>${project.basedir}/../sdk/web</sdk.dir>
 			</properties>
 			<build>
 				<plugins>
@@ -181,11 +182,41 @@
 								<phase>generate-resources</phase>
 								<configuration><arguments>run build</arguments></configuration>
 							</execution>
+							<!-- JS SDK for frontend-only apps (sdk/web), served at /sdk/ -->
+							<execution>
+								<id>sdk-npm-ci</id>
+								<goals><goal>npm</goal></goals>
+								<phase>generate-resources</phase>
+								<configuration>
+									<workingDirectory>${sdk.dir}</workingDirectory>
+									<arguments>ci --no-audit --no-fund</arguments>
+								</configuration>
+							</execution>
+							<execution>
+								<id>sdk-npm-build</id>
+								<goals><goal>npm</goal></goals>
+								<phase>generate-resources</phase>
+								<configuration>
+									<workingDirectory>${sdk.dir}</workingDirectory>
+									<arguments>run build</arguments>
+								</configuration>
+							</execution>
 						</executions>
 					</plugin>
 					<plugin>
 						<artifactId>maven-resources-plugin</artifactId>
 						<executions>
+							<execution>
+								<id>copy-sdk-into-jar</id>
+								<phase>process-resources</phase>
+								<goals><goal>copy-resources</goal></goals>
+								<configuration>
+									<outputDirectory>${project.build.outputDirectory}/static/sdk</outputDirectory>
+									<resources>
+										<resource><directory>${sdk.dir}/dist</directory></resource>
+									</resources>
+								</configuration>
+							</execution>
 							<execution>
 								<id>copy-ui-into-jar</id>
 								<phase>process-resources</phase>

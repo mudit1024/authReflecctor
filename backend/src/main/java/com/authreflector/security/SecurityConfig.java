@@ -67,6 +67,8 @@ public class SecurityConfig {
         csrfRequestHandler.setCsrfRequestAttributeName(null);
 
         http
+                // Answers browser preflights (OPTIONS) for frontend-only apps; see SpaOriginsCorsConfigurationSource
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .authenticationManager(authenticationManager)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .requestCache(cache -> cache.requestCache(requestCache))
@@ -78,6 +80,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/", "/login", "/register", "/account", "/admin/apps", "/admin/apps/*",
                                 "/index.html", "/assets/**", "/favicon.svg").permitAll()
+                        // The JS SDK for frontend-only apps, loaded with a <script> tag
+                        .requestMatchers(HttpMethod.GET, "/sdk/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf", "/api/v1/auth/login-context").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
