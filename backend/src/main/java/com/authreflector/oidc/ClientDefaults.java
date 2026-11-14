@@ -1,6 +1,8 @@
 package com.authreflector.oidc;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -30,6 +32,12 @@ public final class ClientDefaults {
     public static RegisteredClient webApp(
             String clientId, String name, String audience,
             String redirectUri, String postLogoutRedirectUri, String encodedSecret) {
+        return webApp(clientId, name, audience, List.of(redirectUri), List.of(postLogoutRedirectUri), encodedSecret);
+    }
+
+    public static RegisteredClient webApp(
+            String clientId, String name, String audience,
+            Collection<String> redirectUris, Collection<String> postLogoutRedirectUris, String encodedSecret) {
 
         return RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId(clientId)
@@ -38,13 +46,35 @@ public final class ClientDefaults {
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
                 .authorizationGrantType(AuthorizationGrantType.REFRESH_TOKEN)
-                .redirectUri(redirectUri)
-                .postLogoutRedirectUri(postLogoutRedirectUri)
+                .redirectUris(uris -> uris.addAll(redirectUris))
+                .postLogoutRedirectUris(uris -> uris.addAll(postLogoutRedirectUris))
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .scope(OidcScopes.EMAIL)
                 .clientSettings(clientSettings(audience))
                 .tokenSettings(tokenSettings())
+                .build();
+    }
+
+    /**
+     * A frontend-only app (JS SDK): public client. It has no secret (a browser can't keep one), so PKCE is what
+     * protects its codes. No refresh tokens: the SDK silently re-checks the SSO session instead.
+     */
+    public static RegisteredClient singlePageApp(
+            String clientId, String name, Collection<String> redirectUris, Collection<String> postLogoutRedirectUris) {
+
+        return RegisteredClient.withId(UUID.randomUUID().toString())
+                .clientId(clientId)
+                .clientName(name)
+                .clientAuthenticationMethod(ClientAuthenticationMethod.NONE)
+                .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
+                .redirectUris(uris -> uris.addAll(redirectUris))
+                .postLogoutRedirectUris(uris -> uris.addAll(postLogoutRedirectUris))
+                .scope(OidcScopes.OPENID)
+                .scope(OidcScopes.PROFILE)
+                .scope(OidcScopes.EMAIL)
+                .clientSettings(clientSettings(clientId))
+                .tokenSettings(TokenSettings.builder().accessTokenTimeToLive(ACCESS_TOKEN_TTL).build())
                 .build();
     }
 

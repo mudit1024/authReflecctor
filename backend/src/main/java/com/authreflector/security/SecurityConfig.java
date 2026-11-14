@@ -76,7 +76,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // The React app's HTML and assets are public; the data behind them is not
                         .requestMatchers(HttpMethod.GET,
-                                "/", "/login", "/register", "/account",
+                                "/", "/login", "/register", "/account", "/admin/apps", "/admin/apps/*",
                                 "/index.html", "/assets/**", "/favicon.svg").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf", "/api/v1/auth/login-context").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()

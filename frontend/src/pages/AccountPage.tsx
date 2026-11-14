@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router'
-import { AlertCircle, LogOut, ShieldCheck } from 'lucide-react'
+import { Link, useNavigate } from 'react-router'
+import { AlertCircle, LayoutGrid, LogOut, ShieldCheck } from 'lucide-react'
 import { AuthLayout } from '@/components/AuthLayout'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -76,6 +76,13 @@ export function AccountPage() {
       <p className="text-sm text-slate-600 dark:text-slate-400">
         Apps that use AuthReflector will sign you in with this account without asking for your password again.
       </p>
+      {user.role === 'ADMIN' && (
+        <Button asChild variant="outline" className="w-full rounded-xl">
+          <Link to="/admin/apps">
+            <LayoutGrid className="h-4 w-4" aria-hidden="true" /> Manage apps
+          </Link>
+        </Button>
+      )}
       <Button variant="outline" className="w-full rounded-xl" onClick={handleSignOut} disabled={signingOut}>
         {signingOut ? <Spinner /> : <LogOut className="h-4 w-4" aria-hidden="true" />} Sign out
       </Button>

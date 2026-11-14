@@ -64,6 +64,11 @@ export async function postJson<T>(url: string, body?: unknown): Promise<T> {
   return parse<T>(await send(url, { method: 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body) }))
 }
 
+export async function putJson<T>(url: string, body: unknown): Promise<T> {
+  const headers = { 'Content-Type': 'application/json', Accept: 'application/json', ...(await csrfHeader()) }
+  return parse<T>(await send(url, { method: 'PUT', headers, body: JSON.stringify(body) }))
+}
+
 // Spring Security's form login reads application/x-www-form-urlencoded parameters
 export async function postForm<T>(url: string, fields: Record<string, string>): Promise<T> {
   const headers = {
