@@ -11,7 +11,10 @@ import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.core.session.SessionRegistry;
+import org.springframework.security.core.session.SessionRegistryImpl;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.DelegatingSecurityContextRepository;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
@@ -59,6 +62,7 @@ public class SecurityConfig {
             SecurityContextRepository securityContextRepository,
             CsrfTokenRepository csrfTokenRepository,
             RequestCache requestCache,
+            SessionRegistry sessionRegistry,
             JsonAuthenticationHandlers jsonHandlers) throws Exception {
 
         // Load the CSRF token on every request, so the XSRF-TOKEN cookie is always there for the React app.
@@ -72,6 +76,10 @@ public class SecurityConfig {
                 .authenticationManager(authenticationManager)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .requestCache(cache -> cache.requestCache(requestCache))
+                // Track sessions: OIDC logout checks the ID token's "sid" against them (no session limit)
+                .sessionManagement(session -> session.sessionConcurrency(concurrency -> concurrency
+                        .maximumSessions(-1)
+                        .sessionRegistry(sessionRegistry)))
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(csrfTokenRepository)
                         .csrfTokenRequestHandler(csrfRequestHandler))
@@ -134,6 +142,19 @@ public class SecurityConfig {
         CookieCsrfTokenRepository repository = CookieCsrfTokenRepository.withHttpOnlyFalse();
         repository.setCookieCustomizer(cookie -> cookie.sameSite("Lax"));
         return repository;
+    }
+
+    // Which signed-in sessions exist. Needed for OpenID Connect logout: an app's ID token carries "sid",
+    // and /connect/logout ends exactly that session
+    @Bean
+    public SessionRegistry sessionRegistry() {
+        return new SessionRegistryImpl();
+    }
+
+    // Tells the registry about destroyed sessions and session-id changes (login changes the id)
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
     // Only remember OIDC authorization requests (to continue them after login), never API calls

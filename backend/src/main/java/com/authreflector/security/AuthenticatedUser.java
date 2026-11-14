@@ -94,6 +94,17 @@ public final class AuthenticatedUser implements UserDetails, CredentialsContaine
         this.passwordHash = null;
     }
 
+    // Same account = same principal (the session registry looks sessions up by principal)
+    @Override
+    public boolean equals(Object other) {
+        return other instanceof AuthenticatedUser user && java.util.Objects.equals(id, user.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return java.util.Objects.hashCode(id);
+    }
+
     @Override
     public String toString() {
         return "AuthenticatedUser[id=" + id + ", email=" + email + ", role=" + role + "]";

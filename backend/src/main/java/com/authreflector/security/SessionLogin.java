@@ -6,6 +6,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.context.SecurityContextHolderStrategy;
+import org.springframework.security.core.session.SessionRegistry;
 import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.security.web.csrf.CsrfTokenRepository;
@@ -26,17 +27,20 @@ public class SessionLogin {
     private final SecurityContextRepository securityContextRepository;
     private final CsrfTokenRepository csrfTokenRepository;
     private final PostLoginRedirect postLoginRedirect;
+    private final SessionRegistry sessionRegistry;
     private final SecurityContextHolderStrategy contextHolder = SecurityContextHolder.getContextHolderStrategy();
 
     public SessionLogin(
             AuthenticationManager authenticationManager,
             SecurityContextRepository securityContextRepository,
             CsrfTokenRepository csrfTokenRepository,
-            PostLoginRedirect postLoginRedirect) {
+            PostLoginRedirect postLoginRedirect,
+            SessionRegistry sessionRegistry) {
         this.authenticationManager = authenticationManager;
         this.securityContextRepository = securityContextRepository;
         this.csrfTokenRepository = csrfTokenRepository;
         this.postLoginRedirect = postLoginRedirect;
+        this.sessionRegistry = sessionRegistry;
     }
 
     /** @return where the browser should go next */
@@ -54,6 +58,8 @@ public class SessionLogin {
         context.setAuthentication(authentication);
         contextHolder.setContext(context);
         securityContextRepository.saveContext(context, request, response);
+        // Same as form login: register the session so OIDC logout ("sid") can find it
+        sessionRegistry.registerNewSession(request.getSession().getId(), authentication.getPrincipal());
 
         // New session, new CSRF token (same as Spring's CsrfAuthenticationStrategy after form login)
         CsrfToken newToken = csrfTokenRepository.generateToken(request);

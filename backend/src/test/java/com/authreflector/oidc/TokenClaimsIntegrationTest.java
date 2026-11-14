@@ -189,6 +189,24 @@ class TokenClaimsIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Asha"));
     }
 
+    // ---------- single sign-out ----------
+
+    // RP-initiated logout: the app sends the user to /connect/logout with its ID token; AuthReflector ends
+    // the SSO session and returns the user to the app's registered after-sign-out URL
+    @Test
+    void shouldEndTheSsoSessionWhenAnAppSignsTheUserOut() throws Exception {
+        MockHttpSession session = signIn(mockMvc, EMAIL, PASSWORD, new MockHttpSession());
+        String idToken = tokensFor("splitmate-web", session).get("id_token");
+
+        mockMvc.perform(get("/connect/logout").session(session)
+                        .queryParam("id_token_hint", idToken)
+                        .queryParam("post_logout_redirect_uri", "http://127.0.0.1:8081/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("http://127.0.0.1:8081/"));
+
+        mockMvc.perform(get("/api/v1/me").session(session)).andExpect(status().isUnauthorized());
+    }
+
     // ---------- defaults every new app gets ----------
 
     @Test
@@ -206,7 +224,10 @@ class TokenClaimsIntegrationTest {
     // ---------- helpers ----------
 
     private Map<String, String> tokens(String clientId) throws Exception {
-        MockHttpSession session = signIn(mockMvc, EMAIL, PASSWORD, new MockHttpSession());
+        return tokensFor(clientId, signIn(mockMvc, EMAIL, PASSWORD, new MockHttpSession()));
+    }
+
+    private Map<String, String> tokensFor(String clientId, MockHttpSession session) throws Exception {
         Pkce pkce = Pkce.create();
         MvcResult authorized = mockMvc.perform(authorize(clientId, pkce).session(session)).andReturn();
         String code = queryParam(authorized.getResponse().getRedirectedUrl(), "code");

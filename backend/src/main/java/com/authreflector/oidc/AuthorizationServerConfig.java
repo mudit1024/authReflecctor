@@ -67,7 +67,12 @@ public class AuthorizationServerConfig {
                 .with(authorizationServer, server -> server.oidc(Customizer.withDefaults()))
                 // Frontend-only apps call the token endpoint from the browser (uses the corsConfigurationSource bean)
                 .cors(Customizer.withDefaults())
-                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .authorizeHttpRequests(auth -> auth
+                        // Silent SSO checks (prompt=none) must reach the authorization endpoint even when nobody
+                        // is signed in: it answers login_required to the app instead of showing a login page.
+                        // (In Spring Security 7 this rule runs before the endpoint, so it must let them through.)
+                        .requestMatchers(AuthorizationServerConfig::isSilentAuthorizationRequest).permitAll()
+                        .anyRequest().authenticated())
                 // Same session storage and saved-request handling as our login page (SecurityConfig)
                 .securityContext(context -> context.securityContextRepository(securityContextRepository))
                 .requestCache(cache -> cache.requestCache(requestCache))
@@ -77,6 +82,13 @@ public class AuthorizationServerConfig {
                         PathPatternRequestMatcher.withDefaults().matcher(HttpMethod.GET, "/oauth2/authorize")));
 
         return http.build();
+    }
+
+    static boolean isSilentAuthorizationRequest(jakarta.servlet.http.HttpServletRequest request) {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        return "GET".equals(request.getMethod())
+                && "/oauth2/authorize".equals(path)
+                && "none".equals(request.getParameter("prompt"));
     }
 
     // Registered apps live in the database: adding one never needs a restart (read on every request)
