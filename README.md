@@ -14,7 +14,7 @@ Jira: project `AUTH` at https://muditkumarbhatnagar.atlassian.net/jira/software/
 
 ## Status
 
-Phase **A0, Foundation** (AUTH-1): project skeleton, database, signing keys, UI shell, CI.
+Phase **A0, Foundation** (AUTH-1): project skeleton, database, signing keys, UI shell, CI. Next: A1 core SSO.
 
 ## Tech stack
 
@@ -45,9 +45,31 @@ cd backend
 curl http://localhost:9000/actuator/health      # {"status":"UP", ...}
 ```
 
+### Login UI (React)
+
+```bash
+cd frontend
+npm install
+npm run dev        # http://localhost:5173, with hot reload
+npm test           # Vitest + Testing Library
+npm run lint
+```
+
+In development Vite (:5173) forwards server paths (`/api`, `POST /login`, `/oauth2`, ...) to Spring (:9000), so the browser
+sees a single origin, the same as in production, where Spring serves the built UI itself.
+
+To build one jar that contains both the backend and the UI:
+
+```bash
+cd backend
+./mvnw -Pui package     # builds frontend/ with its own pinned Node and packs it into static/
+java -jar target/authreflector-0.0.1-SNAPSHOT.jar
+```
+
 | Service | Address |
 |---|---|
 | AuthReflector | http://localhost:9000 |
+| Login UI (dev server) | http://localhost:5173 |
 | PostgreSQL | localhost:**5434**, database/user `authreflector` |
 | Mailpit (caught emails) | http://localhost:8026 |
 
