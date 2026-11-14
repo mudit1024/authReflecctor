@@ -1,0 +1,9 @@
+# Normalise line endings in the repository (LF), convert per OS on checkout...
+* text=auto
+# ...except files that must stay LF everywhere (shell scripts break with CRLF)
+*.sh text eol=lf
+mvnw text eol=lf
+# Binary files: never touch
+*.docx binary
+*.png binary
+*.jpg binary
