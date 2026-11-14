@@ -56,8 +56,9 @@ Apps are registered at runtime in the database: no config file, no restart.
   <repository><id>jitpack.io</id><url>https://jitpack.io</url></repository>
 </repositories>
 <dependency>
-  <groupId>com.github.mudit1024.authReflector</groupId>
-  <artifactId>authreflector-client-spring-boot-starter</artifactId>
+  <!-- JitPack names it after the repository; versions are Git tags -->
+  <groupId>com.github.mudit1024</groupId>
+  <artifactId>authReflector</artifactId>
   <version>0.1.0</version>
 </dependency>
 ```

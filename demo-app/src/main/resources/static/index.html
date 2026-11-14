@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Demo App · AuthReflector</title>
+<style>
+  body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; }
+  main { max-width: 560px; margin: 64px auto; padding: 32px; background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; }
+  h1 { margin-top: 0; }
+  button, a.button { display: inline-block; padding: 10px 16px; border-radius: 10px; border: 1px solid #cbd5e1; background: #fff; color: inherit; font: inherit; cursor: pointer; text-decoration: none; }
+  pre { background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 10px; overflow-x: auto; font-size: 13px; }
+  .muted { color: #64748b; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Demo App</h1>
+  <p class="muted">A template app that signs in with AuthReflector using only the client starter (no login code).</p>
+  <div id="content">Loading…</div>
+</main>
+<script>
+  const content = document.getElementById('content');
+
+  async function show() {
+    const me = await fetch('/auth/me');
+    if (me.status === 401) {
+      // This app needs a signed-in user: go to AuthReflector (instant if already signed in there)
+      if (!sessionStorage.getItem('demo:redirected')) {
+        sessionStorage.setItem('demo:redirected', '1');
+        location.href = '/auth/login';
+        return;
+      }
+      content.innerHTML = '<p>You are not signed in.</p><a class="button" href="/auth/login">Sign in with AuthReflector</a>';
+      return;
+    }
+    sessionStorage.removeItem('demo:redirected');
+    const user = await me.json();
+    const hello = await (await fetch('/api/hello')).json();
+    content.innerHTML = '';
+    const greeting = document.createElement('p');
+    greeting.id = 'greeting';
+    greeting.textContent = 'Signed in as ' + user.name + ' (' + user.email + ')';
+    const api = document.createElement('pre');
+    api.textContent = JSON.stringify(hello, null, 2);
+    const signOut = document.createElement('button');
+    signOut.textContent = 'Sign out';
+    signOut.onclick = async () => {
+      // POST needs the CSRF token; the answer says where to end the AuthReflector session too
+      const csrf = await (await fetch('/auth/csrf')).json();
+      const response = await fetch('/auth/logout', { method: 'POST', headers: { [csrf.headerName]: csrf.token } });
+      sessionStorage.setItem('demo:redirected', '1');
+      location.href = (await response.json()).logoutUrl;
+    };
+    content.append(greeting, api, signOut);
+  }
+
+  show().catch((error) => { content.textContent = 'Something went wrong: ' + error.message; });
+</script>
+</body>
+</html>

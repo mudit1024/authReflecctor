@@ -1,5 +1,5 @@
 # JitPack builds the client starter from a Git tag, so apps can depend on
-#   com.github.mudit1024.authReflector:authreflector-client-spring-boot-starter:<tag>
+#   com.github.mudit1024:authReflector:<tag>   (JitPack names a single-artifact repo after the repository)
 jdk:
   - openjdk21
 install:
