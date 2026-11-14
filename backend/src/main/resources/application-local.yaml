@@ -20,6 +20,7 @@ server:
 
 # Dev-only signing keys, created by scripts/generate-dev-keys.sh (git-ignored, never shared).
 authreflector:
+  issuer: ${AUTH_ISSUER:http://localhost:9000}
   signing-key:
     key-id: ${AUTH_SIGNING_KEY_ID:dev-key-1}
     public-key-location: ${AUTH_SIGNING_PUBLIC_KEY:file:secrets/dev-public.pem}

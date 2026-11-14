@@ -17,7 +17,8 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    // 5170: 5173/5174 are taken by SplitMate's and CodeQuror's dev servers
+    port: 5170,
     strictPort: true,
     proxy: {
       '/api': BACKEND,

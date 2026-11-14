@@ -64,6 +64,11 @@
 			<artifactId>spring-boot-starter-security-test</artifactId>
 			<scope>test</scope>
 		</dependency>
+		<!-- OpenID Connect provider: /oauth2/authorize, /oauth2/token, /oauth2/jwks, discovery, userinfo, logout (AUTH-13) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-oauth2-authorization-server</artifactId>
+		</dependency>
 		<!-- JOSE (JWT/JWK/JWS): RSA key loading, signing (NimbusJwtEncoder) and verification.
 		     The authorization server itself is added in the OIDC ticket. -->
 		<dependency>

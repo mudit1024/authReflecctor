@@ -12,6 +12,7 @@ import { register } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { meetsPasswordPolicy } from '@/lib/passwordPolicy'
 import { goTo } from '@/lib/navigation'
+import { useLoginContext } from '@/lib/useLoginContext'
 
 type Form = { name: string; email: string; password: string }
 type Field = keyof Form
@@ -24,6 +25,7 @@ export function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<Field, string>>>({})
   const [error, setError] = useState<{ message: string; emailTaken?: boolean } | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const clientName = useLoginContext()
 
   const isValid =
     form.name.trim() !== '' && LOOKS_LIKE_EMAIL.test(form.email.trim()) && meetsPasswordPolicy(form.password)
@@ -71,6 +73,7 @@ export function RegisterPage() {
     <AuthLayout
       title="Create your account"
       subtitle="One account for every app"
+      clientName={clientName}
       footer={
         <>
           Already have an account?{' '}
