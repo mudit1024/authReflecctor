@@ -1,8 +1,15 @@
-import { Link } from 'react-router'
+import { Link, useLocation } from 'react-router'
+import { CheckCircle2 } from 'lucide-react'
 import { AuthLayout } from '@/components/AuthLayout'
+import { Alert, AlertTitle } from '@/components/ui/alert'
 
-// The sign-in form arrives in the login ticket (A1); this is the routed shell.
+type LoginLocationState = { registeredEmail?: string } | null
+
+// The sign-in form arrives in AUTH-12 (login, session and logout); this page already
+// confirms a fresh registration.
 export function LoginPage() {
+  const state = useLocation().state as LoginLocationState
+
   return (
     <AuthLayout
       title="Welcome back"
@@ -15,6 +22,13 @@ export function LoginPage() {
           </Link>
         </>
       }
-    />
+    >
+      {state?.registeredEmail && (
+        <Alert role="status" className="border-emerald-500/40 bg-transparent text-emerald-700 dark:text-emerald-400">
+          <CheckCircle2 />
+          <AlertTitle>Account created for {state.registeredEmail}. You can sign in now.</AlertTitle>
+        </Alert>
+      )}
+    </AuthLayout>
   )
 }
