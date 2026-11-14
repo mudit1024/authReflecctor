@@ -2,23 +2,33 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { AlertCircle, LayoutGrid, LogOut, ShieldCheck } from 'lucide-react'
 import { AuthLayout } from '@/components/AuthLayout'
+import { AppLauncher } from '@/components/AppLauncher'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { logout, me, type Me } from '@/api/auth'
+import { launcherApps, type LauncherApp } from '@/api/launcher'
 import { ApiError } from '@/api/client'
 
-// The signed-in landing page. Grows into the full account page (sessions, linked accounts) in A4.
+// Signed-in home: who you are, and every app you can open with this account (the launcher)
 export function AccountPage() {
   const navigate = useNavigate()
   const [user, setUser] = useState<Me | null>(null)
+  const [apps, setApps] = useState<LauncherApp[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [signingOut, setSigningOut] = useState(false)
 
   useEffect(() => {
     let active = true
     me()
-      .then((current) => active && setUser(current))
+      .then((current) => {
+        if (!active) return
+        setUser(current)
+        // The launcher is a bonus: if it fails, the page still works without it
+        launcherApps()
+          .then((list) => active && setApps(list))
+          .catch(() => active && setApps([]))
+      })
       .catch((caught) => {
         if (!active) return
         if (caught instanceof ApiError && caught.status === 401) {
@@ -65,27 +75,44 @@ export function AccountPage() {
   }
 
   return (
-    <AuthLayout title={`Hi, ${user.name}`} subtitle="You are signed in to AuthReflector">
-      <div className="flex items-center gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-        <ShieldCheck className="h-8 w-8 shrink-0 text-cyan-500" aria-hidden="true" />
-        <div className="min-w-0">
-          <p className="truncate font-medium">{user.name}</p>
-          <p className="truncate text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 text-slate-900 dark:from-black dark:via-slate-900 dark:to-black dark:text-white">
+      <div className="mx-auto max-w-3xl space-y-8 px-4 py-10">
+        <header className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-9 w-9 shrink-0 text-cyan-500" aria-hidden="true" />
+            <div className="min-w-0">
+              <h1 className="bg-gradient-to-r from-cyan-500 to-purple-600 bg-clip-text text-2xl font-bold text-transparent dark:from-cyan-400 dark:to-purple-500">
+                Hi, {user.name}
+              </h1>
+              <p className="truncate text-sm text-slate-600 dark:text-slate-400">{user.email}</p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {user.role === 'ADMIN' && (
+              <Button asChild variant="outline" className="rounded-xl">
+                <Link to="/admin/apps">
+                  <LayoutGrid className="h-4 w-4" aria-hidden="true" /> Manage apps
+                </Link>
+              </Button>
+            )}
+            <Button variant="outline" className="rounded-xl" onClick={handleSignOut} disabled={signingOut}>
+              {signingOut ? <Spinner /> : <LogOut className="h-4 w-4" aria-hidden="true" />} Sign out
+            </Button>
+          </div>
+        </header>
+
+        <section className="space-y-3" aria-labelledby="apps-heading">
+          <div>
+            <h2 id="apps-heading" className="text-lg font-semibold">
+              Your apps
+            </h2>
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              One account for all of them: open any app and you're signed in, no password needed.
+            </p>
+          </div>
+          {apps === null ? <Spinner className="h-5 w-5" /> : <AppLauncher apps={apps} />}
+        </section>
       </div>
-      <p className="text-sm text-slate-600 dark:text-slate-400">
-        Apps that use AuthReflector will sign you in with this account without asking for your password again.
-      </p>
-      {user.role === 'ADMIN' && (
-        <Button asChild variant="outline" className="w-full rounded-xl">
-          <Link to="/admin/apps">
-            <LayoutGrid className="h-4 w-4" aria-hidden="true" /> Manage apps
-          </Link>
-        </Button>
-      )}
-      <Button variant="outline" className="w-full rounded-xl" onClick={handleSignOut} disabled={signingOut}>
-        {signingOut ? <Spinner /> : <LogOut className="h-4 w-4" aria-hidden="true" />} Sign out
-      </Button>
-    </AuthLayout>
+    </div>
   )
 }
