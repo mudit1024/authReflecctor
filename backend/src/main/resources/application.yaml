@@ -38,3 +38,10 @@ management:
     health:
       # Load balancers and Docker only need UP/DOWN, not database details.
       show-details: never
+
+authreflector:
+  signing-key:
+    # No defaults: production must provide its own key pair (e.g. from AWS Secrets Manager).
+    key-id: ${AUTH_SIGNING_KEY_ID}
+    public-key-location: ${AUTH_SIGNING_PUBLIC_KEY}
+    private-key-location: ${AUTH_SIGNING_PRIVATE_KEY}

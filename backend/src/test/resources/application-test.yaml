@@ -1,0 +1,8 @@
+# Test profile: activated by @IntegrationTest.
+# The database comes from Testcontainers (@ServiceConnection), so no datasource settings here.
+authreflector:
+  signing-key:
+    key-id: test-key-1
+    # Test-only keys: committed on purpose, they protect nothing
+    public-key-location: classpath:keys/test-public.pem
+    private-key-location: classpath:keys/test-private.pem
