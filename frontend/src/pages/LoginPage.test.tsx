@@ -64,6 +64,14 @@ describe('LoginPage', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/signed out/i)
   })
 
+  // The app that sent the user here (saved authorize request) is named on the page
+  it('names the app the user is signing in to', async () => {
+    mockFetch({ '/api/v1/auth/login-context': { status: 200, body: { clientName: 'SplitMate' } } })
+    renderLoginPage()
+
+    expect(await screen.findByText(/to continue to/i)).toHaveTextContent('to continue to SplitMate')
+  })
+
   it('needs both fields before it can submit', async () => {
     renderLoginPage()
     const button = screen.getByRole('button', { name: /sign in/i })

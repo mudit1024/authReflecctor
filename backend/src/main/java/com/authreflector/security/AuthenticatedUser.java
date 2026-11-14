@@ -10,12 +10,19 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.authreflector.identity.Role;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.authreflector.identity.User;
 
 /**
  * The signed-in user as stored in the session (a snapshot taken at login, not the JPA entity:
  * entities don't belong in long-lived HTTP sessions). Email is the username.
  */
+// JSON: stored inside OIDC authorizations in the database (see oidc.AuthorizationJson). Only identity
+// fields are written; the password hash and derived values never are.
+@JsonIgnoreProperties(ignoreUnknown = true)
 public final class AuthenticatedUser implements UserDetails, CredentialsContainer {
 
     private final UUID id;
@@ -23,6 +30,15 @@ public final class AuthenticatedUser implements UserDetails, CredentialsContaine
     private final String email;
     private final Role role;
     private String passwordHash;
+
+    @JsonCreator
+    static AuthenticatedUser fromJson(
+            @JsonProperty("id") UUID id,
+            @JsonProperty("name") String name,
+            @JsonProperty("email") String email,
+            @JsonProperty("role") Role role) {
+        return new AuthenticatedUser(id, name, email, role, null);
+    }
 
     private AuthenticatedUser(UUID id, String name, String email, Role role, String passwordHash) {
         this.id = id;
@@ -53,17 +69,20 @@ public final class AuthenticatedUser implements UserDetails, CredentialsContaine
     }
 
     @Override
+    @JsonIgnore
     public String getUsername() {
         return email;
     }
 
     @Override
+    @JsonIgnore
     public String getPassword() {
         return passwordHash;
     }
 
     // "ROLE_" prefix is Spring Security's convention, so hasRole("ADMIN") matches ROLE_ADMIN
     @Override
+    @JsonIgnore
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority("ROLE_" + role.name()));
     }

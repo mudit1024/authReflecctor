@@ -10,6 +10,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { login } from '@/api/auth'
 import { ApiError } from '@/api/client'
 import { goTo } from '@/lib/navigation'
+import { useLoginContext } from '@/lib/useLoginContext'
 
 type LoginLocationState = { email?: string; signedOut?: boolean } | null
 
@@ -19,6 +20,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const clientName = useLoginContext()
 
   const canSubmit = email.trim() !== '' && password !== '' && !submitting
 
@@ -42,6 +44,7 @@ export function LoginPage() {
     <AuthLayout
       title="Welcome back"
       subtitle="Sign in with your AuthReflector account"
+      clientName={clientName}
       footer={
         <>
           New here?{' '}

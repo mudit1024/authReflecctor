@@ -2,6 +2,7 @@ package com.authreflector.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -49,7 +50,9 @@ public class SecurityConfig {
             "form-action 'self'",
             "frame-ancestors 'none'");
 
+    // Order 2: the OIDC endpoints have their own chain (AuthorizationServerConfig, order 1)
     @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(
             HttpSecurity http,
             AuthenticationManager authenticationManager,
@@ -75,7 +78,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/", "/login", "/register", "/account",
                                 "/index.html", "/assets/**", "/favicon.svg").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/auth/csrf", "/api/v1/auth/login-context").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                         // Spring forwards errors to /error; it must stay reachable or every error becomes 401

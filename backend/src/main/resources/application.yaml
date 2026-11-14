@@ -52,6 +52,8 @@ management:
       show-details: never
 
 authreflector:
+  # Public base URL of AuthReflector, written into every token as "iss". No default: must be set per environment.
+  issuer: ${AUTH_ISSUER}
   signing-key:
     # No defaults: production must provide its own key pair (e.g. from AWS Secrets Manager).
     key-id: ${AUTH_SIGNING_KEY_ID}

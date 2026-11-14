@@ -22,3 +22,10 @@ export function logout(): Promise<void> {
 export function me(): Promise<Me> {
   return getJson<Me>('/api/v1/me')
 }
+
+export type LoginContext = { clientName?: string }
+
+// The app waiting for this sign-in, if any (from the authorize request saved on the server)
+export function loginContext(): Promise<LoginContext> {
+  return getJson<LoginContext>('/api/v1/auth/login-context')
+}
