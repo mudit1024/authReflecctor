@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { RegisterPage } from './RegisterPage'
 import { LoginPage } from './LoginPage'
+import { goTo } from '@/lib/navigation'
+import { clearCookies, mockFetch, setCsrfCookie } from '@/test/fetchMock'
+
+vi.mock('@/lib/navigation', () => ({ goTo: vi.fn() }))
 
 function renderRegisterPage() {
   return render(
@@ -15,13 +19,7 @@ function renderRegisterPage() {
   )
 }
 
-function mockFetchResponse(status: number, body: unknown) {
-  const fetchMock = vi.fn().mockResolvedValue(
-    new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }),
-  )
-  vi.stubGlobal('fetch', fetchMock)
-  return fetchMock
-}
+const REGISTER = '/api/v1/auth/register'
 
 async function fillForm(name: string, email: string, password: string) {
   const user = userEvent.setup()
@@ -31,8 +29,11 @@ async function fillForm(name: string, email: string, password: string) {
   return user
 }
 
+beforeEach(() => setCsrfCookie())
 afterEach(() => {
   vi.unstubAllGlobals()
+  vi.mocked(goTo).mockClear()
+  clearCookies()
 })
 
 describe('RegisterPage', () => {
@@ -59,29 +60,32 @@ describe('RegisterPage', () => {
     expect(button).toBeEnabled()
   })
 
-  it('creates the account and goes to sign-in with a confirmation', async () => {
-    const fetchMock = mockFetchResponse(201, { name: 'Rahul', email: 'rahul@example.com' })
+  // Decision: signed in automatically, so the user continues straight on
+  it('creates the account and continues signed in', async () => {
+    const fetchMock = mockFetch({
+      [REGISTER]: { status: 201, body: { name: 'Rahul', email: 'rahul@example.com', redirectUrl: '/account' } },
+    })
     renderRegisterPage()
 
     const user = await fillForm('Rahul', 'Rahul@Example.com', 'Password@123')
     await user.click(screen.getByRole('button', { name: /create account/i }))
 
     expect(fetchMock).toHaveBeenCalledWith(
-      '/api/v1/auth/register',
+      REGISTER,
       expect.objectContaining({
         method: 'POST',
         body: JSON.stringify({ name: 'Rahul', email: 'Rahul@Example.com', password: 'Password@123' }),
       }),
     )
-    expect(await screen.findByRole('heading', { name: /welcome back/i })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('rahul@example.com')
+    await vi.waitFor(() => expect(goTo).toHaveBeenCalledWith('/account'))
   })
 
   it('shows field errors returned by the server next to the fields', async () => {
-    mockFetchResponse(400, {
-      status: 400,
-      message: 'Validation failed',
-      fieldErrors: [{ field: 'email', message: 'Email must be valid' }],
+    mockFetch({
+      [REGISTER]: {
+        status: 400,
+        body: { status: 400, message: 'Validation failed', fieldErrors: [{ field: 'email', message: 'Email must be valid' }] },
+      },
     })
     renderRegisterPage()
 
@@ -92,13 +96,18 @@ describe('RegisterPage', () => {
   })
 
   it('shows every server message when one field breaks several rules', async () => {
-    mockFetchResponse(400, {
-      status: 400,
-      message: 'Validation failed',
-      fieldErrors: [
-        { field: 'password', message: 'Password must contain at least one lowercase letter' },
-        { field: 'password', message: 'Password must be between 8 and 64 characters' },
-      ],
+    mockFetch({
+      [REGISTER]: {
+        status: 400,
+        body: {
+          status: 400,
+          message: 'Validation failed',
+          fieldErrors: [
+            { field: 'password', message: 'Password must contain at least one lowercase letter' },
+            { field: 'password', message: 'Password must be between 8 and 64 characters' },
+          ],
+        },
+      },
     })
     renderRegisterPage()
 
@@ -108,19 +117,20 @@ describe('RegisterPage', () => {
     expect(await screen.findByText(/at least one lowercase letter\. .*between 8 and 64 characters\./i)).toBeInTheDocument()
   })
 
-  it('explains when the email already has an account and offers sign-in', async () => {
-    mockFetchResponse(409, { status: 409, message: 'Email is already registered', fieldErrors: [] })
+  it('explains when the email already has an account and offers sign-in with the email filled in', async () => {
+    mockFetch({ [REGISTER]: { status: 409, body: { status: 409, message: 'Email is already registered', fieldErrors: [] } } })
     renderRegisterPage()
 
-    const user = await fillForm('Rahul', 'rahul@example.com', 'Password@123')
+    const user = await fillForm('Rahul', 'Rahul@Example.com', 'Password@123')
     await user.click(screen.getByRole('button', { name: /create account/i }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/already registered/i)
-    expect(screen.getAllByRole('link', { name: /sign in/i }).length).toBeGreaterThan(0)
+    await user.click(screen.getByRole('link', { name: /sign in instead/i }))
+    expect(screen.getByLabelText(/email/i)).toHaveValue('rahul@example.com')
   })
 
   it('shows a friendly message when the server cannot be reached', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+    mockFetch({ [REGISTER]: new TypeError('Failed to fetch') })
     renderRegisterPage()
 
     const user = await fillForm('Rahul', 'rahul@example.com', 'Password@123')

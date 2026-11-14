@@ -12,6 +12,12 @@ spring:
       hibernate:
         format_sql: true
 
+server:
+  servlet:
+    session:
+      cookie:
+        secure: false   # local development runs on plain http://localhost
+
 # Dev-only signing keys, created by scripts/generate-dev-keys.sh (git-ignored, never shared).
 authreflector:
   signing-key:

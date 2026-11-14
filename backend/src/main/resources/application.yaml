@@ -27,6 +27,18 @@ spring:
 server:
   # 9000 keeps clear of SplitMate (8080) and Vite (5173).
   port: 9000
+  servlet:
+    session:
+      # The SSO session: how long you stay signed in without activity (design doc 7, PROPOSED 7 days)
+      timeout: 7d
+      cookie:
+        # Own name: cookies are shared across ports on localhost, so the default JSESSIONID would
+        # collide with SplitMate's (design doc 15)
+        name: AR_SESSION
+        http-only: true
+        same-site: lax
+        # HTTPS-only in production; the local profile turns this off for http://localhost
+        secure: true
 
 management:
   endpoints:

@@ -153,7 +153,7 @@ doc.add_paragraph()
 table(
     ["Field", "Value"],
     [
-        ["Document version", "0.2 (14 Nov 2026: Jira, repo, login UI and web token decisions made)"],
+        ["Document version", "0.3 (14 Nov 2026: A0 done; registration, login, session and logout built)"],
         ["Date", "14 November 2026"],
         ["Owners", "Somil, Mudit (to confirm)"],
         ["Status", "Draft. Items marked PROPOSED or OPEN need a decision before the related work starts."],
@@ -764,7 +764,16 @@ table(
         ["A-D8", "Git: separate repository authreflector", "DECIDED (14 Nov 2026)"],
         ["A-D9", "Login and account pages: React SPA served by AuthReflector on the auth origin (session cookie + CSRF, no JWTs in the browser)", "DECIDED (14 Nov 2026)"],
         ["A-D10", "Web apps use a backend-for-frontend; tokens never reach the browser", "DECIDED (14 Nov 2026)"],
-        ["A-D11+", "Remaining OPEN items (1, 4, 6-11), asked when their phase starts", "OPEN"],
+        ["A-D11", "Pull requests through GitHub CLI; main protected (PR + green Backend and Frontend CI required)", "DECIDED (14 Nov 2026)"],
+        ["A-D12", "Login: Spring Security form login at POST /login with JSON handlers (not a custom login endpoint)", "DECIDED (14 Nov 2026)"],
+        ["A-D13", "Signed in automatically after registration", "DECIDED (14 Nov 2026)"],
+        ["A-D14", "Login UI: auth-app design plus 'continue to <app>' slot", "DECIDED (14 Nov 2026)"],
+        ["A-D15", "Password hashes stored with algorithm prefix ({bcrypt}) via DelegatingPasswordEncoder, so the algorithm can be upgraded later", "DONE (AUTH-11)"],
+        ["A-D16", "Packages by module (identity, security, web, config) instead of by layer", "DONE (AUTH-11)"],
+        ["A-D17", "CSRF: XSRF-TOKEN cookie (readable, SameSite=Lax) echoed in X-XSRF-TOKEN header; session cookie AR_SESSION (HttpOnly, SameSite=Lax, Secure outside local), idle timeout 7 days", "DONE (AUTH-12)"],
+        ["A-D18", "Server and tests run in UTC; local Postgres on 5434 (5432 SplitMate, 5433 native Windows service)", "DONE (AUTH-2)"],
+        ["A-D19", "Known gap: registration 409 reveals existing emails; fixed in A2 with email verification + rate limiting", "OPEN (A2)"],
+        ["A-D20+", "Remaining OPEN items (1, 4, 6-11), asked when their phase starts", "OPEN"],
     ],
     widths=[2.5, 9, 4],
 )

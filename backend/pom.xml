@@ -54,8 +54,18 @@
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
 		</dependency>
+		<!-- Spring Security: session-based login for AuthReflector's own pages (AUTH-12) -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!-- JOSE (JWT/JWK/JWS): RSA key loading, signing (NimbusJwtEncoder) and verification.
-		     The full authorization server starter is added in A1 together with the security rules. -->
+		     The authorization server itself is added in the OIDC ticket. -->
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-oauth2-jose</artifactId>
