@@ -1,0 +1,40 @@
+# Shared configuration for every environment.
+# Secrets never have defaults here: a deployed app without them must fail at startup.
+spring:
+  application:
+    name: authreflector
+
+  profiles:
+    # Used only when no profile is set explicitly (e.g. running from the IDE).
+    # Production sets SPRING_PROFILES_ACTIVE=prod, which replaces this.
+    default: local
+
+  datasource:
+    url: ${AUTH_DB_URL}
+    username: ${AUTH_DB_USERNAME}
+    password: ${AUTH_DB_PASSWORD}
+
+  jpa:
+    # Flyway owns the schema. Hibernate only checks that entities match it and never changes tables.
+    hibernate:
+      ddl-auto: validate
+    # Don't keep a DB connection open while the HTTP response is being rendered.
+    open-in-view: false
+
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  # 9000 keeps clear of SplitMate (8080) and Vite (5173).
+  port: 9000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        # Only health is exposed over HTTP; everything else stays internal.
+        include: health
+  endpoint:
+    health:
+      # Load balancers and Docker only need UP/DOWN, not database details.
+      show-details: never

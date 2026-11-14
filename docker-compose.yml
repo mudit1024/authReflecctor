@@ -1,0 +1,36 @@
+# Local development services for AuthReflector.
+# Ports are shifted from the defaults so this runs side by side with SplitMate
+# (SplitMate uses 5432, the native Windows PostgreSQL service uses 5433).
+services:
+  postgres:
+    # Pinned major version: the same image is used by the Testcontainers tests,
+    # so local, test and CI databases behave identically.
+    image: postgres:17
+    container_name: authreflector-postgres
+    environment:
+      POSTGRES_DB: authreflector
+      POSTGRES_USER: authreflector
+      # Dev-only default. Note: Postgres applies this only when the volume is first created;
+      # changing it later does not change the existing password (the drift SplitMate hit).
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-authreflector_dev}
+    ports:
+      - "5434:5432"
+    volumes:
+      - authreflector-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U authreflector -d authreflector"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Catches every email the app sends (verification, password reset) so nothing reaches real inboxes.
+  # Web UI: http://localhost:8026
+  mailpit:
+    image: axllent/mailpit:v1.27
+    container_name: authreflector-mailpit
+    ports:
+      - "1026:1025"   # SMTP
+      - "8026:8025"   # Web UI
+
+volumes:
+  authreflector-postgres-data:
