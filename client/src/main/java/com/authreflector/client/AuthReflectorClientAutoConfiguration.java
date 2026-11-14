@@ -40,6 +40,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.csrf.HttpSessionCsrfTokenRepository;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.web.bind.support.WebDataBinderFactory;
@@ -148,9 +149,22 @@ public class AuthReflectorClientAutoConfiguration {
                         .logoutRequestMatcher(PathPatternRequestMatcher.withDefaults()
                                 .matcher(org.springframework.http.HttpMethod.POST, "/auth/logout"))
                         .logoutSuccessHandler(logoutSuccess))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint(properties)));
+                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(entryPoint(properties)))
+                // After sign-in, return to the page the user asked for, never to a background API call
+                .requestCache(cache -> cache.requestCache(pagesOnlyRequestCache(properties)));
 
         return http.build();
+    }
+
+    private static boolean isApiCall(HttpServletRequest request, AuthReflectorClientProperties properties) {
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        return path.startsWith(properties.apiPathPrefix()) || path.startsWith("/auth/");
+    }
+
+    private static HttpSessionRequestCache pagesOnlyRequestCache(AuthReflectorClientProperties properties) {
+        HttpSessionRequestCache cache = new HttpSessionRequestCache();
+        cache.setRequestMatcher(request -> "GET".equals(request.getMethod()) && !isApiCall(request, properties));
+        return cache;
     }
 
     // API and /auth/* calls get 401 JSON; page visits are sent to sign in
@@ -158,7 +172,7 @@ public class AuthReflectorClientAutoConfiguration {
         LoginUrlAuthenticationEntryPoint signIn = new LoginUrlAuthenticationEntryPoint(AUTHORIZATION_START);
         return (request, response, exception) -> {
             String path = request.getRequestURI().substring(request.getContextPath().length());
-            if (path.startsWith(properties.apiPathPrefix()) || path.startsWith("/auth/")) {
+            if (isApiCall(request, properties)) {
                 writeJson(response, 401, "{\"status\":401,\"error\":\"Unauthorized\",\"message\":\"Sign in required\",\"path\":\""
                         + path.replace("\"", "") + "\"}");
             } else {

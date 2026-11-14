@@ -126,6 +126,20 @@ class ClientStarterTest {
                 .andExpect(header().string("Location", containsString("/oauth2/authorization/authreflector")));
     }
 
+    // After sign-in, the browser returns to the page it asked for, never to a background API call
+    // (found by the real-browser test: a page's fetch('/auth/me') was replayed after sign-in)
+    @Test
+    void shouldRememberOnlyPagesToReturnToAfterSignIn() throws Exception {
+        MockHttpSession page = new MockHttpSession();
+        mockMvc.perform(get("/dashboard").session(page)).andExpect(status().is3xxRedirection());
+        assertThat(page.getAttribute("SPRING_SECURITY_SAVED_REQUEST")).isNotNull();
+
+        MockHttpSession api = new MockHttpSession();
+        mockMvc.perform(get("/api/hello").session(api)).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/auth/me").session(api)).andExpect(status().isUnauthorized());
+        assertThat(api.getAttribute("SPRING_SECURITY_SAVED_REQUEST")).isNull();
+    }
+
     @Test
     void shouldAnswerApiCallsWithoutSignInWith401Json() throws Exception {
         mockMvc.perform(get("/api/hello"))
