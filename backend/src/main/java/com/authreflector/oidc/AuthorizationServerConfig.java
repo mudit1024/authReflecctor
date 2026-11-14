@@ -27,6 +27,7 @@ import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 import com.authreflector.apps.EnabledAppsClientRepository;
+import com.authreflector.launcher.UsageRecordingAuthorizationService;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
@@ -83,14 +84,15 @@ public class AuthorizationServerConfig {
 
     // Authorization codes and tokens in flight (needed for code exchange, refresh, revoke, userinfo)
     @Bean
-    public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbc, RegisteredClientRepository clients) {
+    public OAuth2AuthorizationService authorizationService(
+            JdbcTemplate jdbc, RegisteredClientRepository clients, java.time.Clock clock) {
         JdbcOAuth2AuthorizationService service = new JdbcOAuth2AuthorizationService(jdbc, clients);
         // Our signed-in principal is stored with each authorization: allowlist it for JSON (see AuthorizationJson)
         JsonMapper json = AuthorizationJson.mapper();
         service.setAuthorizationRowMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clients, json));
         service.setAuthorizationParametersMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(json));
-        // Refresh token reuse detection (D37) around the normal store
-        return new ReuseDetectingAuthorizationService(service, jdbc);
+        // Layers around the normal store: refresh token reuse detection (D37), then launcher usage
+        return new UsageRecordingAuthorizationService(new ReuseDetectingAuthorizationService(service, jdbc), jdbc, clock);
     }
 
     @Bean
