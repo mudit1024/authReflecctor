@@ -113,6 +113,23 @@ class AuthorizationServerIntegrationTest {
         assertThat(queryParam(continued.getResponse().getRedirectedUrl(), "state")).isEqualTo("state-123");
     }
 
+    // Silent SSO check (prompt=none): never show a login page; tell the app "not signed in" instead
+    @Test
+    void shouldAnswerLoginRequiredToASilentCheckWhenNobodyIsSignedIn() throws Exception {
+        mockMvc.perform(authorize("splitmate-web", Pkce.create()).queryParam("prompt", "none"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", startsWith(redirectUri("splitmate-web") + "?error=login_required")));
+    }
+
+    @Test
+    void shouldAnswerASilentCheckWithACodeWhenAlreadySignedIn() throws Exception {
+        MockHttpSession session = signIn(mockMvc, EMAIL, PASSWORD, new MockHttpSession());
+
+        mockMvc.perform(authorize("splitmate-web", Pkce.create()).queryParam("prompt", "none").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(header().string("Location", startsWith(redirectUri("splitmate-web") + "?code=")));
+    }
+
     @Test
     void shouldReturnNoLoginContextWhenNoAppIsWaiting() throws Exception {
         mockMvc.perform(get("/api/v1/auth/login-context"))
