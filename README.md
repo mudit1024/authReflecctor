@@ -34,11 +34,14 @@ Prerequisites: Java 21, Docker Desktop (running).
 # 1. Start PostgreSQL and Mailpit
 docker compose up -d
 
-# 2. Run the backend (uses the "local" profile by default)
+# 2. Once: create a local token-signing key pair (backend/secrets/, git-ignored)
+./scripts/generate-dev-keys.sh  # Git Bash on Windows
+
+# 3. Run the backend (uses the "local" profile by default)
 cd backend
 ./mvnw spring-boot:run          # Windows: mvnw.cmd spring-boot:run
 
-# 3. Check it is up
+# 4. Check it is up
 curl http://localhost:9000/actuator/health      # {"status":"UP", ...}
 ```
 
