@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.jdbc.core.JdbcOperations;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.oauth2.server.authorization.OAuth2AuthorizationServerConfigurer;
@@ -80,13 +81,14 @@ public class AuthorizationServerConfig {
 
     // Authorization codes and tokens in flight (needed for code exchange, refresh, revoke, userinfo)
     @Bean
-    public OAuth2AuthorizationService authorizationService(JdbcOperations jdbc, RegisteredClientRepository clients) {
+    public OAuth2AuthorizationService authorizationService(JdbcTemplate jdbc, RegisteredClientRepository clients) {
         JdbcOAuth2AuthorizationService service = new JdbcOAuth2AuthorizationService(jdbc, clients);
         // Our signed-in principal is stored with each authorization: allowlist it for JSON (see AuthorizationJson)
         JsonMapper json = AuthorizationJson.mapper();
         service.setAuthorizationRowMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationRowMapper(clients, json));
         service.setAuthorizationParametersMapper(new JdbcOAuth2AuthorizationService.JsonMapperOAuth2AuthorizationParametersMapper(json));
-        return service;
+        // Refresh token reuse detection (D37) around the normal store
+        return new ReuseDetectingAuthorizationService(service, jdbc);
     }
 
     @Bean
