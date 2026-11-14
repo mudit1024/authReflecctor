@@ -1,0 +1,7 @@
+# What an app writes to use AuthReflector: four lines
+authreflector:
+  client:
+    issuer-uri: http://localhost:9000
+    client-id: demo-app
+    client-secret: demo-secret
+    audience: demo-api
