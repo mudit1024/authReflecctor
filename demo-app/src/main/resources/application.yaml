@@ -1,0 +1,11 @@
+server:
+  # Open the app at http://127.0.0.1:8081 (its registered redirect URL uses the IP, as OAuth 2.1 requires locally)
+  port: 8081
+
+# Single sign-on with AuthReflector: these four lines are the whole integration
+authreflector:
+  client:
+    issuer-uri: ${AUTH_ISSUER:http://localhost:9000}
+    client-id: demo-app
+    client-secret: ${DEMO_APP_CLIENT_SECRET}   # shown once on AuthReflector's admin page
+    audience: demo-api

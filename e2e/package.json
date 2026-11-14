@@ -1,0 +1,12 @@
+{
+  "name": "authreflector-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Real-browser single sign-on test across apps (see README)",
+  "scripts": {
+    "test": "node sso.e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.65.1"
+  }
+}

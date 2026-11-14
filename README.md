@@ -56,9 +56,10 @@ Apps are registered at runtime in the database: no config file, no restart.
   <repository><id>jitpack.io</id><url>https://jitpack.io</url></repository>
 </repositories>
 <dependency>
-  <groupId>com.github.mudit1024.authReflector</groupId>
-  <artifactId>authreflector-client-spring-boot-starter</artifactId>
-  <version>0.1.0</version>
+  <!-- JitPack names it after the repository; versions are Git tags -->
+  <groupId>com.github.mudit1024</groupId>
+  <artifactId>authReflector</artifactId>
+  <version>0.1.1</version>
 </dependency>
 ```
 
@@ -83,7 +84,7 @@ That's all: no login code in the app. You get:
 - `POST /auth/logout`, which returns `{logoutUrl}`; open it in the browser to sign out at AuthReflector too
 - `AuthReflectorSignInEvent` on every sign-in, to create or update the app's own user row
 
-Source: [client/](client).
+Source: [client/](client). A complete example app (one controller, one page, no security code) is in [demo-app/](demo-app): copy it to start a new project.
 
 ## Adding SSO to a frontend-only app (JS SDK)
 
@@ -105,6 +106,12 @@ Source: [client/](client).
 
 Open the app at `http://127.0.0.1:<port>` (not `localhost`), matching its registered redirect URL.
 The SDK source is in [sdk/web](sdk/web); it is built into the jar by `./mvnw -Pui package`.
+
+## End-to-end test
+
+[e2e/](e2e) drives a real browser through single sign-on across a React app (JS SDK), a plain HTML page (JS SDK) and
+a Spring Boot app (client starter): one sign-in, no password in the other apps, launcher glowing, single sign-out.
+See [e2e/README.md](e2e/README.md).
 
 ## Tech stack
 
