@@ -29,7 +29,7 @@ class SpaControllerTest {
 
     // A refresh or deep link on a React route must load the React app, not a 404
     @ParameterizedTest
-    @ValueSource(strings = {"/", "/login", "/register", "/account"})
+    @ValueSource(strings = {"/", "/login", "/register", "/account", "/admin/apps", "/admin/apps/new", "/admin/apps/splitmate-web"})
     void shouldServeTheReactAppForItsRoutes(String path) throws Exception {
         mockMvc.perform(get(path))
                 .andExpect(status().isOk())

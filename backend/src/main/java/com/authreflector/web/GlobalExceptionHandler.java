@@ -45,6 +45,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.CONFLICT, "Email is already registered", request, List.of());
     }
 
+    @ExceptionHandler(ApiException.class)
+    public ResponseEntity<ErrorResponse> handleApiException(ApiException exception, HttpServletRequest request) {
+        return build(exception.getStatus(), exception.getMessage(), request, List.of());
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleMalformedJson(HttpServletRequest request) {
         // Body missing, not valid JSON, or wrong value types: Jackson failed before the controller ran

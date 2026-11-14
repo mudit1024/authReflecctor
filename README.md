@@ -32,6 +32,19 @@ Jira: project `AUTH` at https://muditkumarbhatnagar.atlassian.net/jira/software/
 Every POST needs the CSRF token: the value of the `XSRF-TOKEN` cookie sent back in the `X-XSRF-TOKEN` header
 (the React app's API client does this automatically). The session cookie is `AR_SESSION`.
 
+## Admin: registering apps
+
+Apps are registered at runtime in the database: no config file, no restart.
+
+1. Make your account an admin once, from the database (there is deliberately no API or UI for this):
+   `./scripts/make-admin.sh you@example.com`, then sign out and in again.
+2. Open http://localhost:9000/account → **Manage apps** → **New app**.
+   - **With backend** (SplitMate, CodeQuror): gets a client secret, **shown once** (stored only as a hash).
+   - **Frontend only** (Pincode, embeddings POC): no secret; the JS SDK uses PKCE.
+3. Redirect URLs must be `https://`, or `http://127.0.0.1:<port>` for local development
+   (OAuth 2.1 does not allow `localhost` here: open local apps at `http://127.0.0.1:<port>`).
+4. Disabling an app blocks new sign-ins at once and ends its existing sessions.
+
 ## Tech stack
 
 | Layer | Choice |

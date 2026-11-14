@@ -26,6 +26,7 @@ import org.springframework.security.web.context.SecurityContextRepository;
 import org.springframework.security.web.savedrequest.RequestCache;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
+import com.authreflector.apps.EnabledAppsClientRepository;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
@@ -75,8 +76,9 @@ public class AuthorizationServerConfig {
 
     // Registered apps live in the database: adding one never needs a restart (read on every request)
     @Bean
-    public RegisteredClientRepository registeredClientRepository(JdbcOperations jdbc) {
-        return new JdbcRegisteredClientRepository(jdbc);
+    public RegisteredClientRepository registeredClientRepository(JdbcTemplate jdbc) {
+        // Disabled apps (admin page) are treated as unknown: they can't start a sign-in or get tokens
+        return new EnabledAppsClientRepository(new JdbcRegisteredClientRepository(jdbc), jdbc);
     }
 
     // Authorization codes and tokens in flight (needed for code exchange, refresh, revoke, userinfo)
