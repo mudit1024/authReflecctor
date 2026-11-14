@@ -1,0 +1,44 @@
+name: AuthReflector CI
+
+# PRs are checked before merge; main is re-checked after every merge.
+# (Not "push" on every branch: that would run each PR build twice.)
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A newer push to the same PR cancels the older, now pointless run
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (build + tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      # No database service here: Testcontainers starts its own postgres:17
+      # (Docker is available on GitHub's Ubuntu runners), exactly as on a developer machine.
+      - name: Build and test
+        working-directory: backend
+        run: ./mvnw -B clean verify
+
+      - name: Upload test reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: backend/target/surefire-reports/
+          retention-days: 7
