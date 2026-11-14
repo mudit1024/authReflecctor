@@ -1,0 +1,46 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.classpath
+.project
+.settings/
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment and secrets: never commit real values
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+# Test-only keys are the single exception (they protect nothing)
+!backend/src/test/resources/keys/*.pem
+secrets/
+
+# Logs
+*.log
+
+# Build
+target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+build/
+dist/
+.mvn/wrapper/maven-wrapper.jar
+
+# Node
+node_modules/
+coverage/
+
+# Office lock files (e.g. design doc open in Word)
+~$*
+
+# Temporary
+tmp/
+temp/
